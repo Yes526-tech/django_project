@@ -97,9 +97,33 @@ class TodoAPIView(APIView):
                 
             
             return Response(serializer_complete.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk=None):
+
+        with open('todos.json', "r+") as json_file:
+            data = json.load(json_file)
+        #silmek istediğimiz todoya ulaşmak için:
+        [todo] = [item for item in data if item['id'] == pk]
+        #eğer todo id yoksa bad request döncek
+        if not todo:
+            
+            #bura not found olmayacak mi bad request yerine
+            return Response({"message": "Bad request"}, status=status.HTTP_404_NOT_FOUND)
+        #eğer varsa 
+        else:
+            
+            #burda ise pop methodu ile istenilen idili todoyu silincek
+            new_todos = [data.pop() if item['id'] ==
+                         pk else item for item in data]
+            # convert back to json.
+            with open('todos.json', 'w') as f:
+                json.dump(new_todos, f)
+            #ve todo deleted döndürülcek
+            return Response({"message": "Todo deleted"})
+
             
             
             
 
         
-        return Response({}, status=status.HTTP_400_BAD_REQUEST)
