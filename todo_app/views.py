@@ -72,11 +72,12 @@ class TodoAPIView(APIView):
                 return Response({}, status=status.HTTP_400_BAD_REQUEST)
             # serializerin sadece completed objesini gonderdigimizde hata vermemesi icin
             # partial=True kullandik yoksa dger field lar olmadigindan dolayi validate etmeyecekti
-            serializer = self.serializer_class(
+            serializer_complete = self.serializer_class(
                 "completed", data={'completed': request.data['completed']}, partial=True)
+            serializer_note = self.serializer_class('notes', data={'notes': request.data['notes']}, partial=True)
 
-            if serializer.is_valid():
-                completed = serializer.validated_data.get('completed')
+            if serializer_complete.is_valid():
+                completed = serializer_complete.validated_data.get('completed')
                 index = data.index(todo)
                 todo['completed'] = completed
                 # data listemizde bulunan todo yu yenisi ile degistiriyoruz.
@@ -84,5 +85,21 @@ class TodoAPIView(APIView):
                 with open('todos.json', 'w') as f:
                     json.dump(data, f)
                 return Response({'message': 'updated'})
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            elif serializer_note.is_valid():
+                notes = serializer_note.validated_data.get('notes')
+                index = data.index(todo)
+                todo['notes'] = notes
+                # data listemizde bulunan todo yu yenisi ile degistiriyoruz.
+                data[index] = todo
+                with open('todos.json', 'w') as f:
+                    json.dump(data, f)
+                return Response({'message': 'updated'})
+                
+            
+            return Response(serializer_complete.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+            
+
+        
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
