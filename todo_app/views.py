@@ -61,56 +61,65 @@ class TodoAPIView(APIView):
     def patch(self, request, pk=None):
 
         if pk:
-            with open('todos.json', 'r+') as json_file:
-                data = json.load(json_file)
-
-            # Todoyu json icinden id sinie buluyoruz.
-            [todo] = [item for item in data if item['id'] == pk]
-
-            # Todo item bulunmadiysa
-            if not len(todo):
-                return Response({}, status=status.HTTP_400_BAD_REQUEST)
-            # serializerin sadece completed objesini gonderdigimizde hata vermemesi icin
-            # partial=True kullandik yoksa dger field lar olmadigindan dolayi validate etmeyecekti
-            serializer_complete = self.serializer_class(
-                "completed", data={'completed': request.data['completed']}, partial=True)
-            serializer_note = self.serializer_class('notes', data={'notes': request.data['notes']}, partial=True)
-
-            if serializer_complete.is_valid():
-                completed = serializer_complete.validated_data.get('completed')
-                index = data.index(todo)
-                todo['completed'] = completed
-                # data listemizde bulunan todo yu yenisi ile degistiriyoruz.
-                data[index] = todo
-                with open('todos.json', 'w') as f:
-                    json.dump(data, f)
-                return Response({'message': 'updated'})
-            elif serializer_note.is_valid():
-                notes = serializer_note.validated_data.get('notes')
-                index = data.index(todo)
-                todo['notes'] = notes
-                # data listemizde bulunan todo yu yenisi ile degistiriyoruz.
-                data[index] = todo
-                with open('todos.json', 'w') as f:
-                    json.dump(data, f)
-                return Response({'message': 'updated'})
-                
             
+            try:
+                    with open('todos.json', "r+") as json_file:
+                        data = json.load(json_file)
+                    [todo] = [item for item in data if item['id'] == pk]
+
+                    index = data.index(todo)
+
+                    [item['notes'].pop() if item['id'] == pk else item for item in data]               
+                    data[index] = todo
+
+                    with open('todos.json', 'w') as f:
+                        json.dump(data, f)
+                    return Response({'message': 'updated'})
+            except:
+                with open('todos.json', 'r+') as json_file:
+                    data = json.load(json_file)
+
+                # Todoyu json icinden id sinie buluyoruz.
+                [todo] = [item for item in data if item['id'] == pk]
+
+                # Todo item bulunmadiysa
+                if not len(todo):
+                    return Response({}, status=status.HTTP_400_BAD_REQUEST)
+                # serializerin sadece completed objesini gonderdigimizde hata vermemesi icin
+                # partial=True kullandik yoksa dger field lar olmadigindan dolayi validate etmeyecekti
+                serializer_complete = self.serializer_class(
+                        "completed", data={'completed': request.data['completed']}, partial=True)
+            
+                if serializer_complete.is_valid():
+                        
+                        completed = serializer_complete.validated_data.get('completed')
+                        index = data.index(todo)
+                        todo['completed'] = completed
+                        # data listemizde bulunan todo yu yenisi ile degistiriyoruz.
+                        data[index] = todo
+                        with open('todos.json', 'w') as f:
+                            json.dump(data, f)
+                        return Response({'message': 'updated'})
+                        
+                
             return Response(serializer_complete.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, pk=None):
+    def delete(self, pk=None):
 
         with open('todos.json', "r+") as json_file:
             data = json.load(json_file)
         #silmek istediğimiz todoya ulaşmak için:
         [todo] = [item for item in data if item['id'] == pk]
         #eğer todo id yoksa bad request döncek
+        
         if not todo:
             
             #bura not found olmayacak mi bad request yerine
             return Response({"message": "Bad request"}, status=status.HTTP_404_NOT_FOUND)
         #eğer varsa 
+
+            
         else:
             
             #burda ise pop methodu ile istenilen idili todoyu silincek
@@ -121,6 +130,11 @@ class TodoAPIView(APIView):
                 json.dump(new_todos, f)
             #ve todo deleted döndürülcek
             return Response({"message": "Todo deleted"})
+        
+        
+            
+        
+        
 
             
             
